@@ -20,8 +20,9 @@ func main() {
 			fmt.Printf("airport %s\n", item.Code)
 			lastApt = item.Code
 		case *nav.Runway:
-			fmt.Printf("runway %s %s-%s\n", lastApt,
-				item.End[0].Code, item.End[1].Code)
+			fmt.Printf("runway %s %s-%s (%d)\n", lastApt,
+				item.End[0].Code, item.End[1].Code,
+				item.Length())
 		case error:
 			fmt.Printf("Error %v\n", item)
 			terminated++

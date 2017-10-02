@@ -6,6 +6,7 @@ package nav
 import (
 	"bufio"
 	"compress/gzip"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -64,6 +65,28 @@ type Runway struct {
 
 // To signal end of data
 type Terminator int
+
+func deg2rad(deg float64) float64 {
+	return deg * math.Pi / 180.0
+}
+
+const (
+	MetersToFeet   float64 = 3.28084
+	EarthAvgRadius float64 = 6371000
+)
+
+func Distance(a, b Coords) float64 {
+	dL := deg2rad(math.Abs(a.Longitude - b.Longitude))
+	aLat := deg2rad(a.Latitude)
+	bLat := deg2rad(b.Latitude)
+	body := math.Sin(aLat)*math.Sin(bLat) +
+		math.Cos(aLat)*math.Cos(bLat)*math.Cos(dL)
+	return EarthAvgRadius * math.Acos(body)
+}
+
+func (rw *Runway) Length() float64 {
+	return Distance(rw.End[0].Pos, rw.End[1].Pos) * MetersToFeet
+}
 
 func parseNavaid(fields []string) interface{} {
 	if len(fields) < 7 {
@@ -141,7 +164,7 @@ func parseAirport(fields []string) interface{} {
 	return nil
 }
 
-func gzTextParser(path string, parser func([]string) interface{}, out chan interface{}) {
+func gzTextParser(path string, parser func([]string) interface{}, out chan<- interface{}) {
 	var handle *os.File
 	var err error
 	if handle, err = os.Open(path); err != nil {
@@ -167,11 +190,11 @@ func gzTextParser(path string, parser func([]string) interface{}, out chan inter
 }
 
 // Parse returns a...
-func ReadNavaids(path string, out chan interface{}) {
+func ReadNavaids(path string, out chan<- interface{}) {
 	gzTextParser(path, parseNavaid, out)
 }
 
 // Parse returns a...
-func ReadAirports(path string, out chan interface{}) {
+func ReadAirports(path string, out chan<- interface{}) {
 	gzTextParser(path, parseAirport, out)
 }
